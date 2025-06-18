@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>חנות הפיצה</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Varela Round',sans-serif;background:#0a0a0a;color:#fff;overflow-x:hidden}
+body::before{content:"";position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(45deg,#e63946,#111,#457b9d);background-size:600% 600%;animation:bgMove 10s ease infinite;z-index:-1}
+@keyframes bgMove{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+header{background:#e63946;padding:20px;text-align:center;font-size:32px;letter-spacing:1px}
+.container{max-width:1100px;margin:30px auto;padding:20px}
+h2{font-size:26px;margin:20px 0}
+.list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px}
+.card{background:#222;padding:20px;border-radius:14px;cursor:pointer;transition:.3s ease;position:relative;text-align:center;font-size:20px}
+.card:hover{background:#333;transform:scale(1.03)}
+.card input[type="radio"],.card input[type="checkbox"]{position:absolute;top:15px;left:15px;transform:scale(1.4)}
+button{background:#e63946;border:none;color:#fff;padding:16px 32px;border-radius:50px;cursor:pointer;font-size:20px;margin-top:30px;transition:.3s;box-shadow:0 0 10px #000}
+button:hover{background:#f25464}
+.total{font-size:26px;margin:20px 0}
+.orders{margin-top:50px}
+.orderItem{background:#111;padding:15px;border-radius:10px;margin:10px 0}
+.orderItem p{margin:5px 0}
+</style>
+</head>
+<body>
+<header>חנות הפיצה</header>
+<div class="container">
+<h2>בחר פיצה:</h2>
+<div class="list" id="pizzaList"></div>
+<h2>בחר גודל:</h2>
+<div class="list" id="sizeList"></div>
+<h2>תוספות:</h2>
+<div class="list" id="extrasList"></div>
+<div class="total" id="totalPrice">סה״כ: 0 ₪</div>
+<button onclick="confirmOrder()">הזמן עכשיו</button>
+<div class="orders">
+<h2>הזמנות שבוצעו:</h2>
+<div id="orderHistory"></div>
+</div>
+</div>
+<script>
+const pizzas=[{name:"מרגריטה",price:36},{name:"בצל",price:46},{name:"טבעונית",price:42}];
+const sizes=[{name:"קטן",add:0},{name:"בינוני",add:12},{name:"גדול",add:22}];
+const extras=[{name:"גבינה נוספת",price:5},{name:"זיתים",price:4},{name:"פטריות",price:6},{name:"בצל",price:3},{name:"עגבניות",price:4},{name:"שום קונפי",price:5}];
+let selectedPizza=null,selectedSize=null,selectedExtras=[],orderHistory=[];
+function createLists(){let pList="",sList="",eList="";
+pizzas.forEach((p,i)=>{pList+=`<div class="card"><input type="radio" name="pizza" value="${i}" onchange="selectPizza(${i})">${p.name}<br>${p.price} ₪</div>`});
+sizes.forEach((s,i)=>{sList+=`<div class="card"><input type="radio" name="size" value="${i}" onchange="selectSize(${i})">${s.name}<br>${s.add>0?`(+${s.add} ₪)`:""}</div>`});
+extras.forEach((e,i)=>{eList+=`<div class="card"><input type="checkbox" value="${i}" onchange="toggleExtra(${i})">${e.name}<br>(+${e.price} ₪)</div>`});
+document.getElementById("pizzaList").innerHTML=pList;
+document.getElementById("sizeList").innerHTML=sList;
+document.getElementById("extrasList").innerHTML=eList
+}
+function selectPizza(i){selectedPizza=pizzas[i];updateTotal()}
+function selectSize(i){selectedSize=sizes[i];updateTotal()}
+function toggleExtra(i){const ex=extras[i];if(selectedExtras.includes(ex)){selectedExtras=selectedExtras.filter(e=>e!==ex)}else{selectedExtras.push(ex)}updateTotal()}
+function updateTotal(){let total=0;if(selectedPizza)total+=selectedPizza.price;if(selectedSize)total+=selectedSize.add;selectedExtras.forEach(e=>total+=e.price);document.getElementById("totalPrice").innerText=`סה״כ: ${total} ₪`}
+function confirmOrder(){if(!selectedPizza||!selectedSize){Swal.fire({icon:"error",title:"חסר בחירה",text:"יש לבחור פיצה וגודל"})}else{let details=`<p>🍕 ${selectedPizza.name}</p><p> ${selectedSize.name}</p>`;if(selectedExtras.length>0){details+=`<p> תוספות:</p><ul>`;selectedExtras.forEach(e=>{details+=`<li>${e.name}</li>`});details+=`</ul>`}details+=`<p>${document.getElementById("totalPrice").innerText}</p>`;
+Swal.fire({title:"הזמנה בוצעה!",html:details,icon:"success"});orderHistory.push({pizza:selectedPizza.name,size:selectedSize.name,extras:selectedExtras.map(e=>e.name),total:document.getElementById("totalPrice").innerText});updateHistory();selectedPizza=null;selectedSize=null;selectedExtras=[];document.querySelectorAll("input").forEach(i=>i.checked=false);updateTotal()}}
+function updateHistory(){let html="";orderHistory.forEach(o=>{html+=`<div class="orderItem"><p>🍕 ${o.pizza}</p><p> ${o.size}</p>`;if(o.extras.length>0){html+=`<p> ${o.extras.join(", ")}</p>`}html+=`<p>${o.total}</p></div>`});document.getElementById("orderHistory").innerHTML=html}
+createLists()
+</script>
+</body>
+</html>

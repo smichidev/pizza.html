@@ -8,61 +8,186 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Varela Round',sans-serif;background:#0a0a0a;color:#fff;overflow-x:hidden}
-body::before{content:"";position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(45deg,#e63946,#111,#457b9d);background-size:600% 600%;animation:bgMove 10s ease infinite;z-index:-1}
-@keyframes bgMove{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
-header{background:#e63946;padding:20px;text-align:center;font-size:32px;letter-spacing:1px}
-.container{max-width:1100px;margin:30px auto;padding:20px}
-h2{font-size:26px;margin:20px 0}
-.list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px}
-.card{background:#222;padding:20px;border-radius:14px;cursor:pointer;transition:.3s ease;position:relative;text-align:center;font-size:20px}
-.card:hover{background:#333;transform:scale(1.03)}
-.card input[type="radio"],.card input[type="checkbox"]{position:absolute;top:15px;left:15px;transform:scale(1.4)}
-button{background:#e63946;border:none;color:#fff;padding:16px 32px;border-radius:50px;cursor:pointer;font-size:20px;margin-top:30px;transition:.3s;box-shadow:0 0 10px #000}
-button:hover{background:#f25464}
-.total{font-size:26px;margin:20px 0}
-.orders{margin-top:50px}
-.orderItem{background:#111;padding:15px;border-radius:10px;margin:10px 0}
-.orderItem p{margin:5px 0}
+body{font-family:'Varela Round',sans-serif;background:#f9f9f9;color:#111;overflow-x:hidden}
+header{background:linear-gradient(90deg,#e63946,#ff6b6b);padding:22px;text-align:center;font-size:32px;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:flex;justify-content:space-between;align-items:center}
+.clock{font-size:22px}
+.container{max-width:1200px;margin:30px auto;padding:20px}
+h2{font-size:28px;margin:25px 0;color:#333}
+.list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px}
+.card{background:#fff;padding:22px;border-radius:16px;cursor:pointer;transition:.3s ease;position:relative;text-align:center;font-size:22px;box-shadow:0 6px 14px rgba(0,0,0,0.1)}
+.card:hover{background:#f1f1f1;transform:translateY(-5px)}
+.card input[type="radio"],.card input[type="checkbox"]{position:absolute;top:16px;left:16px;transform:scale(1.6)}
+button{background:#e63946;border:none;color:#fff;padding:18px 36px;border-radius:50px;cursor:pointer;font-size:22px;margin-top:35px;transition:.3s;box-shadow:0 0 12px rgba(0,0,0,0.3)}
+button:hover{background:#ff4757}
+.total{font-size:28px;margin:25px 0;color:#444}
+.orders{margin-top:60px}
+.orderItem, .statsItem{background:#fff;padding:18px;border-radius:14px;margin:14px 0;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.orderItem p, .statsItem p{margin:6px 0;font-size:18px}
+.orderItem span, .statsItem span{font-weight:bold}
+#staffPanel{display:none;margin-top:40px}
+.statsPanel{display:flex;gap:20px;margin-bottom:20px}
+.statsPanel .statsItem{flex:1}
+#loginPanel{text-align:center;margin:50px auto;max-width:400px;padding:30px;background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,0.1)}
+#loginPanel input{margin:15px 0;padding:12px;width:100%;font-size:18px;border:1px solid #ddd;border-radius:8px}
+#loginPanel button{margin:10px 0}
+#shopPanel{display:none}
 </style>
 </head>
 <body>
-<header>חנות הפיצה</header>
+<div id="loginPanel">
+<h2>התחברות</h2>
+<input type="text" id="username" placeholder="שם משתמש">
+<input type="password" id="password" placeholder="סיסמה">
+<button onclick="login()">התחבר</button>
+<button onclick="showRegister()">הרשמה</button>
+</div>
+<div id="shopPanel">
+<header><div>חנות הפיצה 🍕</div><div class="clock" id="clock"></div><button onclick="staffLogin()">כניסת צוות</button></header>
 <div class="container">
-<h2>בחר פיצה:</h2>
-<div class="list" id="pizzaList"></div>
-<h2>בחר גודל:</h2>
-<div class="list" id="sizeList"></div>
-<h2>תוספות:</h2>
-<div class="list" id="extrasList"></div>
-<div class="total" id="totalPrice">סה״כ: 0 ₪</div>
-<button onclick="confirmOrder()">הזמן עכשיו</button>
-<div class="orders">
-<h2>הזמנות שבוצעו:</h2>
-<div id="orderHistory"></div>
+<h2>בחר פיצה:</h2><div class="list" id="pizzaList"></div>
+<h2>בחר גודל:</h2><div class="list" id="sizeList"></div>
+<h2>תוספות:</h2><div class="list" id="extrasList"></div>
+<div class="total" id="totalPrice">סה״כ: 0 ₪</div><button onclick="addToCart()">הוסף לעגלה</button>
+<h2>עגלה:</h2><div id="cartList"></div><button onclick="confirmCart()">אישור עגלה</button>
+<div class="orders"><h2>היסטוריית הזמנות:</h2><div id="orderHistory"></div></div>
+<div id="staffPanel"><h2>פאנל צוות</h2><div class="statsPanel"><div class="statsItem"><p>סה״כ הזמנות: <span id="statCount">0</span></p></div><div class="statsItem"><p>סה״כ הכנסות: <span id="statTotal">0 ₪</span></p></div></div><button onclick="logoutStaff()">יציאה מצוות</button></div>
 </div>
 </div>
 <script>
-const pizzas=[{name:"מרגריטה",price:36},{name:"בצל",price:46},{name:"טבעונית",price:42}];
-const sizes=[{name:"קטן",add:0},{name:"בינוני",add:12},{name:"גדול",add:22}];
-const extras=[{name:"גבינה נוספת",price:5},{name:"זיתים",price:4},{name:"פטריות",price:6},{name:"בצל",price:3},{name:"עגבניות",price:4},{name:"שום קונפי",price:5}];
-let selectedPizza=null,selectedSize=null,selectedExtras=[],orderHistory=[];
-function createLists(){let pList="",sList="",eList="";
-pizzas.forEach((p,i)=>{pList+=`<div class="card"><input type="radio" name="pizza" value="${i}" onchange="selectPizza(${i})">${p.name}<br>${p.price} ₪</div>`});
-sizes.forEach((s,i)=>{sList+=`<div class="card"><input type="radio" name="size" value="${i}" onchange="selectSize(${i})">${s.name}<br>${s.add>0?`(+${s.add} ₪)`:""}</div>`});
-extras.forEach((e,i)=>{eList+=`<div class="card"><input type="checkbox" value="${i}" onchange="toggleExtra(${i})">${e.name}<br>(+${e.price} ₪)</div>`});
-document.getElementById("pizzaList").innerHTML=pList;
-document.getElementById("sizeList").innerHTML=sList;
-document.getElementById("extrasList").innerHTML=eList
+const pizzas=[{name:"מרגריטה",price:36},{name:"בצל",price:46},{name:"טבעונית",price:42},{name:"פפרוני",price:50},{name:"שמפיניון",price:48}]
+const sizes=[{name:"קטן",add:0},{name:"בינוני",add:12},{name:"גדול",add:22}]
+const extras=[{name:"גבינה נוספת",price:5},{name:"זיתים",price:4},{name:"פטריות",price:6},{name:"בצל",price:3},{name:"עגבניות",price:4},{name:"שום קונפי",price:5}]
+let selectedPizza=null,selectedSize=null,selectedExtras=[],cart=[],orderHistory=[],isStaff=false,orderNumber=1,currentUser=null,users=JSON.parse(localStorage.getItem('pizzaUsers'))||[],orders=JSON.parse(localStorage.getItem('pizzaOrders'))||[]
+function init(){
+if(orders.length>0){
+orderHistory=orders
+orderNumber=orderHistory.reduce((max,o)=>Math.max(max,o.num),0)+1
+}
+}
+function createLists(){
+let p="",s="",e=""
+pizzas.forEach((pizz,i)=>p+=`<div class="card"><input type="radio" name="pizza" value="${i}" onchange="selectPizza(${i})">${pizz.name}<br>${pizz.price} ₪</div>`)
+sizes.forEach((sz,i)=>s+=`<div class="card"><input type="radio" name="size" value="${i}" onchange="selectSize(${i})">${sz.name}<br>${sz.add>0?`(+${sz.add} ₪)`:""}</div>`)
+extras.forEach((ex,i)=>e+=`<div class="card"><input type="checkbox" value="${i}" onchange="toggleExtra(${i})">${ex.name}<br>(+${ex.price} ₪)</div>`)
+document.getElementById("pizzaList").innerHTML=p
+document.getElementById("sizeList").innerHTML=s
+document.getElementById("extrasList").innerHTML=e
 }
 function selectPizza(i){selectedPizza=pizzas[i];updateTotal()}
 function selectSize(i){selectedSize=sizes[i];updateTotal()}
-function toggleExtra(i){const ex=extras[i];if(selectedExtras.includes(ex)){selectedExtras=selectedExtras.filter(e=>e!==ex)}else{selectedExtras.push(ex)}updateTotal()}
-function updateTotal(){let total=0;if(selectedPizza)total+=selectedPizza.price;if(selectedSize)total+=selectedSize.add;selectedExtras.forEach(e=>total+=e.price);document.getElementById("totalPrice").innerText=`סה״כ: ${total} ₪`}
-function confirmOrder(){if(!selectedPizza||!selectedSize){Swal.fire({icon:"error",title:"חסר בחירה",text:"יש לבחור פיצה וגודל"})}else{let details=`<p>🍕 ${selectedPizza.name}</p><p> ${selectedSize.name}</p>`;if(selectedExtras.length>0){details+=`<p> תוספות:</p><ul>`;selectedExtras.forEach(e=>{details+=`<li>${e.name}</li>`});details+=`</ul>`}details+=`<p>${document.getElementById("totalPrice").innerText}</p>`;
-Swal.fire({title:"הזמנה בוצעה!",html:details,icon:"success"});orderHistory.push({pizza:selectedPizza.name,size:selectedSize.name,extras:selectedExtras.map(e=>e.name),total:document.getElementById("totalPrice").innerText});updateHistory();selectedPizza=null;selectedSize=null;selectedExtras=[];document.querySelectorAll("input").forEach(i=>i.checked=false);updateTotal()}}
-function updateHistory(){let html="";orderHistory.forEach(o=>{html+=`<div class="orderItem"><p>🍕 ${o.pizza}</p><p> ${o.size}</p>`;if(o.extras.length>0){html+=`<p> ${o.extras.join(", ")}</p>`}html+=`<p>${o.total}</p></div>`});document.getElementById("orderHistory").innerHTML=html}
+function toggleExtra(i){const ex=extras[i];selectedExtras.includes(ex)?selectedExtras=selectedExtras.filter(x=>x!==ex):selectedExtras.push(ex);updateTotal()}
+function updateTotal(){
+let t=0
+if(selectedPizza)t+=selectedPizza.price
+if(selectedSize)t+=selectedSize.add
+selectedExtras.forEach(x=>t+=x.price)
+document.getElementById("totalPrice").innerText=`סה״כ: ${t} ₪`
+}
+function addToCart(){
+if(!selectedPizza||!selectedSize)return Swal.fire('שגיאה','בחר פיצה וגודל','error')
+let price=selectedPizza.price+selectedSize.add+selectedExtras.reduce((a,e)=>a+e.price,0)
+cart.push({pizza:selectedPizza.name,size:selectedSize.name,extras:selectedExtras.map(e=>e.name),price})
+updateCart()
+selectedPizza=selectedSize=null
+selectedExtras=[]
+document.querySelectorAll("input").forEach(i=>i.checked=false)
+updateTotal()
+}
+function updateCart(){
+document.getElementById("cartList").innerHTML=cart.map((o,i)=>`<div class="orderItem"><p>🍕 ${o.pizza} ${o.size}</p><p>(+${o.extras.join(", ")})</p><p>₪${o.price}</p><button onclick="removeCart(${i})">🗑️</button></div>`).join('')
+}
+function removeCart(i){cart.splice(i,1);updateCart()}
+function confirmCart(){
+if(!cart.length)return Swal.fire('שגיאה','העגלה ריקה','error')
+let total=cart.reduce((a,o)=>a+o.price,0)
+let order={num:orderNumber++,items:cart.slice(),total:`${total} ₪`,customer:currentUser.username,userId:currentUser.id,date:new Date().toISOString()}
+orderHistory.push(order)
+orders.push(order)
+localStorage.setItem('pizzaOrders',JSON.stringify(orders))
+updateOrderHistory()
+cart=[]
+updateCart()
+if(isStaff)updateStaffStats()
+Swal.fire('בוצע','ההזמנה בוצעה בהצלחה','success')
+}
+function updateOrderHistory(){
+let userOrders=orderHistory.filter(o=>!isStaff||(isStaff&&currentUser.isAdmin)||o.userId===currentUser.id)
+document.getElementById("orderHistory").innerHTML=userOrders.map((o,i)=>`<div class="orderItem"><p>מס׳ ${o.num} - 👤 ${o.customer} - ${new Date(o.date).toLocaleString('he-IL')}</p>`+o.items.map(it=>`<p>🍕 ${it.pizza} ${it.size} (${it.extras.join(", ")}) – ₪${it.price}</p>`).join('')+`<p>סה״כ: ${o.total}</p>`+((isStaff&&currentUser.isAdmin)?`<button onclick="deleteOrder(${i})">🗑️ מחק</button>`:'')+`</div>`).join('')
+}
+function updateStaffStats(){
+document.getElementById("statCount").innerText=orderHistory.length
+document.getElementById("statTotal").innerText=orderHistory.reduce((a,o)=>a+parseInt(o.total),0)+' ₪'
+}
+function deleteOrder(i){
+orderHistory.splice(i,1)
+orders.splice(i,1)
+localStorage.setItem('pizzaOrders',JSON.stringify(orders))
+updateOrderHistory()
+updateStaffStats()
+}
+function staffLogin(){
+if(currentUser&&currentUser.isAdmin){
+isStaff=true
+document.getElementById("staffPanel").style.display='block'
+updateStaffStats()
+updateOrderHistory()
+return
+}
+Swal.fire({title:"כניסת צוות",html:'<input id="staffUser" class="swal2-input" placeholder="שם משתמש"><input id="staffPass" type="password" class="swal2-input" placeholder="סיסמה">',showCancelButton:true,confirmButtonText:"התחבר",cancelButtonText:"ביטול",preConfirm:()=>{
+const user=document.getElementById('staffUser').value
+const pass=document.getElementById('staffPass').value
+return{user,pass}
+}}).then(r=>{
+if(r.isConfirmed){
+const admin=users.find(u=>u.username===r.value.user&&u.password===r.value.pass&&u.isAdmin)
+if(admin){
+currentUser=admin
+isStaff=true
+document.getElementById("staffPanel").style.display='block'
+updateStaffStats()
+updateOrderHistory()
+Swal.fire('הצלחה','שלום צוות','success')
+}else Swal.fire('שגיאה','פרטים שגויים או אין הרשאות','error')
+}
+})
+}
+function logoutStaff(){isStaff=false;document.getElementById("staffPanel").style.display='none';updateOrderHistory();}
+function login(){
+const username=document.getElementById('username').value
+const password=document.getElementById('password').value
+const user=users.find(u=>u.username===username&&u.password===password)
+if(user){
+currentUser=user
+document.getElementById('loginPanel').style.display='none'
+document.getElementById('shopPanel').style.display='block'
 createLists()
+liveClock()
+updateOrderHistory()
+}else Swal.fire('שגיאה','שם משתמש או סיסמה לא נכונים','error')
+}
+function showRegister(){
+Swal.fire({title:"הרשמה",html:'<input id="regUser" class="swal2-input" placeholder="שם משתמש"><input id="regPass" type="password" class="swal2-input" placeholder="סיסמה"><input id="regName" class="swal2-input" placeholder="שם מלא">',showCancelButton:true,confirmButtonText:"הרשם",cancelButtonText:"ביטול",preConfirm:()=>{
+const user=document.getElementById('regUser').value
+const pass=document.getElementById('regPass').value
+const name=document.getElementById('regName').value
+return{user,pass,name}
+}}).then(r=>{
+if(r.isConfirmed){
+if(users.some(u=>u.username===r.value.user))return Swal.fire('שגיאה','שם משתמש תפוס','error')
+const newUser={id:Date.now(),username:r.value.user,password:r.value.pass,name:r.value.name,isAdmin:false}
+users.push(newUser)
+localStorage.setItem('pizzaUsers',JSON.stringify(users))
+Swal.fire('הצלחה','הרשמה בוצעה','success')
+}
+})
+}
+function liveClock(){setInterval(()=>{document.getElementById("clock").innerText=new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000)}
+if(users.length===0){
+const adminUser={id:1,username:'admin',password:'admin123',name:'מנהל מערכת',isAdmin:true}
+users.push(adminUser)
+localStorage.setItem('pizzaUsers',JSON.stringify(users))
+}
+init()
 </script>
 </body>
 </html>
